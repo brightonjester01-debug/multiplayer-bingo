@@ -1,3 +1,4 @@
+```js
 const socket = new WebSocket(
     location.protocol === "https:"
         ? `wss://${location.host}`
@@ -72,9 +73,14 @@ socket.addEventListener("message", event => {
         document.getElementById("game")
             .style.display = "block";
 
-        document.getElementById("roomDisplay")
-            .textContent =
-            "Room: " + data.roomCode;
+        const roomDisplay =
+            document.getElementById("roomDisplay");
+
+        if (roomDisplay) {
+
+            roomDisplay.textContent =
+                "Room: " + data.roomCode;
+        }
 
         marked =
             data.marked ||
@@ -114,9 +120,9 @@ socket.addEventListener("message", event => {
 
         showCard();
 
-        document.getElementById("status")
-            .textContent =
-            "🎁 Your card is ready!";
+        setStatus(
+            "🎁 Your card is ready!"
+        );
 
         return;
     }
@@ -150,7 +156,7 @@ socket.addEventListener("message", event => {
 
         updateBoard();
 
-        checkBingo();
+        checkWin();
 
         return;
     }
@@ -168,9 +174,9 @@ socket.addEventListener("message", event => {
 
         updateBoard();
 
-        document.getElementById("status")
-            .textContent =
-            "❌ Another player already claimed that square.";
+        setStatus(
+            "❌ Another player already claimed that square."
+        );
 
         return;
     }
@@ -184,20 +190,20 @@ socket.addEventListener("message", event => {
 
         if (data.playerId === playerId) {
 
-            document.getElementById("status")
-                .innerHTML =
-                `<div class="bingo-message">
-                    🏆 BINGO!
-                </div>`;
+            const reason =
+                data.reason === "13 squares"
+                    ? "13 squares!"
+                    : "5 in a row!";
+
+            setStatus(
+                `🏆 BINGO! You won with ${reason}`
+            );
 
         } else {
 
-            document.getElementById("status")
-                .textContent =
-                "🏆 " +
-                data.playerName +
-                " got Bingo!";
-
+            setStatus(
+                `🏆 ${data.playerName} got Bingo!`
+            );
         }
 
         return;
@@ -226,6 +232,10 @@ function showCard() {
     const board =
         document.getElementById("bingo");
 
+    if (!board) {
+        return;
+    }
+
     board.innerHTML = "";
 
     for (let i = 0; i < 25; i++) {
@@ -251,7 +261,7 @@ function showCard() {
 
 
 // =========================
-// UPDATE COLORS
+// UPDATE BOARD COLORS
 // =========================
 
 function updateBoard() {
@@ -261,30 +271,42 @@ function updateBoard() {
 
     squares.forEach((square, index) => {
 
-        // Remove old classes
         square.classList.remove("marked");
-        square.classList.remove("claimed-by-other");
+
+        square.classList.remove(
+            "claimed-by-other"
+        );
+
+        square.style.pointerEvents =
+            "auto";
+
 
         // Nobody owns it
         if (claims[index] === null) {
+
             return;
         }
+
 
         // I own it
         if (claims[index] === playerId) {
 
             square.classList.add("marked");
 
-            square.style.pointerEvents = "auto";
+            square.style.pointerEvents =
+                "auto";
 
             return;
         }
 
+
         // Someone else owns it
-        square.classList.add("claimed-by-other");
+        square.classList.add(
+            "claimed-by-other"
+        );
 
-        square.style.pointerEvents = "none";
-
+        square.style.pointerEvents =
+            "none";
     });
 }
 
@@ -295,9 +317,7 @@ function updateBoard() {
 
 function claimSquare(index) {
 
-    // Don't even send the request
-    // if another player owns it.
-
+    // Someone else owns it
     if (
         claims[index] !== null &&
         claims[index] !== playerId
@@ -317,7 +337,7 @@ function claimSquare(index) {
 
 
 // =========================
-// CLEAR MY SQUARES
+// CLEAR MY CARD
 // =========================
 
 function clearCard() {
@@ -327,28 +347,47 @@ function clearCard() {
         type: "clearMyCard"
 
     }));
-
 }
 
 
 // =========================
-// BINGO CHECK
+// CHECK WIN
 // =========================
 
-function checkBingo() {
+function checkWin() {
 
-    if (hasBingo(marked)) {
+    const squareCount =
+        marked.filter(Boolean).length;
 
-        document.getElementById("status")
-            .innerHTML =
-            `<div class="bingo-message">
-                🏆 BINGO!
-            </div>`;
+
+    // 13 OR MORE SQUARES
+    if (squareCount >= 13) {
+
+        setStatus(
+            "🏆 BINGO! You claimed 13 or more squares!"
+        );
+
+        return;
+    }
+
+
+    // 5 IN A ROW
+    if (hasFiveInARow(marked)) {
+
+        setStatus(
+            "🏆 BINGO! You got 5 in a row!"
+        );
+
+        return;
     }
 }
 
 
-function hasBingo(board) {
+// =========================
+// CHECK 5 IN A ROW
+// =========================
+
+function hasFiveInARow(board) {
 
     // Rows
     for (let row = 0; row < 5; row++) {
@@ -358,7 +397,10 @@ function hasBingo(board) {
         for (let col = 0; col < 5; col++) {
 
             if (!board[row * 5 + col]) {
+
                 complete = false;
+
+                break;
             }
         }
 
@@ -376,7 +418,10 @@ function hasBingo(board) {
         for (let row = 0; row < 5; row++) {
 
             if (!board[row * 5 + col]) {
+
                 complete = false;
+
+                break;
             }
         }
 
@@ -386,13 +431,16 @@ function hasBingo(board) {
     }
 
 
-    // Diagonal
+    // Main diagonal
     let complete = true;
 
     for (let i = 0; i < 5; i++) {
 
         if (!board[i * 5 + i]) {
+
             complete = false;
+
+            break;
         }
     }
 
@@ -407,9 +455,29 @@ function hasBingo(board) {
     for (let i = 0; i < 5; i++) {
 
         if (!board[i * 5 + (4 - i)]) {
+
             complete = false;
+
+            break;
         }
     }
 
     return complete;
 }
+
+
+// =========================
+// STATUS MESSAGE
+// =========================
+
+function setStatus(message) {
+
+    const status =
+        document.getElementById("status");
+
+    if (status) {
+
+        status.textContent = message;
+    }
+}
+```
