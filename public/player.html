@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Play Bingo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <div id="join">
+
+        <h1>🎯 Join Bingo</h1>
+
+        <input
+            id="name"
+            placeholder="Your name"
+        >
+
+        <input
+            id="room"
+            placeholder="Room code"
+            maxlength="5"
+        >
+
+        <button onclick="joinGame()">
+            Join
+        </button>
+
+    </div>
+
+    <div id="game" style="display:none">
+
+        <h1>🎯 Bingo</h1>
+
+        <div id="roomDisplay"></div>
+
+        <p>
+            Click a square when you complete it.
+        </p>
+
+        <div id="bingo" class="bingo-grid"></div>
+
+        <button onclick="clearCard()">
+            Clear My Marks
+        </button>
+
+        <div id="status"></div>
+
+    </div>
+
+</div>
+
+<script src="player.js"></script>
+
+</body>
+</html>

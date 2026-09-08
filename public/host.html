@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bingo Host</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="host-container">
+
+    <h1>👑 Bingo Host</h1>
+
+    <div class="room">
+
+        <h2>Room Code</h2>
+
+        <div id="roomCode">
+            Creating...
+        </div>
+
+        <p>Give this code to the players.</p>
+
+    </div>
+
+    <h2>Players</h2>
+
+    <div id="players">
+        Nobody has joined yet.
+    </div>
+
+    <h2>Create Bingo Card</h2>
+
+    <p>
+        Put whatever you want in the 25 squares.
+    </p>
+
+    <div id="editor" class="bingo-grid"></div>
+
+    <button onclick="giveEveryoneCard()">
+        🎁 Give This Card To Everyone
+    </button>
+
+    <h2>Custom Player Cards</h2>
+
+    <select id="playerSelect">
+        <option value="">Select a player</option>
+    </select>
+
+    <button onclick="giveCustomCard()">
+        🎁 Give Selected Player This Card
+    </button>
+
+    <div id="status"></div>
+
+</div>
+
+<script src="host.js"></script>
+
+</body>
+</html>

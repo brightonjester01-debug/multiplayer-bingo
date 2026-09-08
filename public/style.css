@@ -1,0 +1,159 @@
+```css
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #111;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+.container,
+.host-container {
+    max-width: 900px;
+    margin: auto;
+    padding: 30px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 42px;
+}
+
+button {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 14px 22px;
+    margin: 8px;
+    border-radius: 10px;
+    font-size: 17px;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.85;
+}
+
+input,
+select {
+    padding: 14px;
+    margin: 6px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.room {
+    background: #222;
+    padding: 25px;
+    border-radius: 15px;
+}
+
+#roomCode {
+    font-size: 50px;
+    font-weight: bold;
+    letter-spacing: 8px;
+}
+
+.bingo-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    max-width: 650px;
+    margin: 20px auto;
+}
+
+.square {
+    min-height: 100px;
+    background: #222;
+    border: 2px solid #444;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 10px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+/* Your claimed square */
+.square.marked {
+    background: #22c55e;
+    border-color: #4ade80;
+    color: white;
+    cursor: pointer;
+}
+
+/* Another player's claimed square */
+.square.claimed-by-other {
+    background: #dc2626;
+    border-color: #ef4444;
+    color: white;
+    cursor: not-allowed;
+    opacity: 0.9;
+}
+
+/* Available square */
+.square:not(.marked):not(.claimed-by-other) {
+    background: #222;
+    border-color: #444;
+    cursor: pointer;
+}
+
+.square:not(.marked):not(.claimed-by-other):hover {
+    transform: scale(1.02);
+    border-color: #666;
+}
+
+.editor-square input {
+    width: 100%;
+    background: #222;
+    color: white;
+    border: 2px solid #444;
+}
+
+.player {
+    background: #222;
+    padding: 12px;
+    margin: 6px;
+    border-radius: 8px;
+}
+
+#status {
+    margin: 20px;
+    font-size: 24px;
+}
+
+.bingo-message {
+    background: #22c55e;
+    padding: 20px;
+    border-radius: 12px;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+@media (max-width: 600px) {
+    .container,
+    .host-container {
+        padding: 12px;
+    }
+
+    h1 {
+        font-size: 32px;
+    }
+
+    .square {
+        min-height: 65px;
+        font-size: 12px;
+        padding: 5px;
+    }
+
+    #roomCode {
+        font-size: 35px;
+    }
+}
+```
