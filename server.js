@@ -1,3 +1,4 @@
+```js
 const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
@@ -14,7 +15,10 @@ function makeCode() {
     let code;
 
     do {
-        code = Math.random().toString(36).substring(2, 7).toUpperCase();
+        code = Math.random()
+            .toString(36)
+            .substring(2, 7)
+            .toUpperCase();
     } while (rooms.has(code));
 
     return code;
@@ -43,7 +47,6 @@ function getState(room) {
             marked: p.marked
         })),
 
-        // Which player owns each square
         claims: room.claims
     };
 }
@@ -75,8 +78,6 @@ wss.on("connection", ws => {
 
                 cardTemplate: Array(25).fill(""),
 
-                // null = nobody owns the square
-                // player ID = that player owns it
                 claims: Array(25).fill(null)
             };
 
@@ -117,13 +118,17 @@ wss.on("connection", ws => {
 
             const id =
                 Date.now().toString(36) +
-                Math.random().toString(36).substring(2);
+                Math.random()
+                    .toString(36)
+                    .substring(2);
 
             const player = {
                 id,
                 name: String(data.name || "Player"),
                 ws,
+
                 card: room.cardTemplate.slice(),
+
                 marked: Array(25).fill(false)
             };
 
@@ -168,15 +173,21 @@ wss.on("connection", ws => {
                     ? data.card.slice(0, 25)
                     : Array(25).fill("");
 
+            while (card.length < 25) {
+                card.push("");
+            }
+
             room.cardTemplate = card;
 
-            // New card = reset all claims
+            // New cards reset all claims
             room.claims = Array(25).fill(null);
 
             for (const player of room.players.values()) {
 
                 player.card = card.slice();
-                player.marked = Array(25).fill(false);
+
+                player.marked =
+                    Array(25).fill(false);
 
                 send(player.ws, {
                     type: "card",
@@ -217,8 +228,14 @@ wss.on("connection", ws => {
                     ? data.card.slice(0, 25)
                     : Array(25).fill("");
 
+            while (card.length < 25) {
+                card.push("");
+            }
+
             player.card = card;
-            player.marked = Array(25).fill(false);
+
+            player.marked =
+                Array(25).fill(false);
 
             send(player.ws, {
                 type: "card",
@@ -251,21 +268,20 @@ wss.on("connection", ws => {
 
             const index = Number(data.index);
 
-            if (index < 0 || index >= 25) {
+            if (
+                !Number.isInteger(index) ||
+                index < 0 ||
+                index >= 25
+            ) {
                 return;
             }
 
-            // =====================================
-            // IMPORTANT:
-            // Someone else already owns this box.
-            // =====================================
-
+            // Another player already owns it
             if (
                 room.claims[index] !== null &&
                 room.claims[index] !== player.id
             ) {
 
-                // Tell the player the square is unavailable
                 send(ws, {
                     type: "claimDenied",
                     index,
@@ -276,46 +292,63 @@ wss.on("connection", ws => {
             }
 
             // =========================
-            // UNCLAIM THE SQUARE
+            // UNCLAIM
             // =========================
 
             if (room.claims[index] === player.id) {
 
                 room.claims[index] = null;
-                player.marked[index] = false;
 
+                player.marked[index] = false;
             }
 
             // =========================
-            // CLAIM THE SQUARE
+            // CLAIM
             // =========================
 
             else {
 
                 room.claims[index] = player.id;
-                player.marked[index] = true;
 
+                player.marked[index] = true;
             }
 
-            // Send updated information to EVERYONE
+            // Update EVERYONE
             broadcast(room, {
                 type: "claimsUpdated",
                 claims: room.claims
             });
 
-            // Tell the player their own marks
             send(ws, {
                 type: "marks",
                 marked: player.marked
             });
 
-            // Check Bingo
-            if (checkBingo(player.marked)) {
+            // =========================
+            // WIN CONDITIONS
+            // =========================
+
+            const squareCount =
+                player.marked.filter(Boolean).length;
+
+            const hasFiveInARow =
+                checkBingo(player.marked);
+
+            const has13Squares =
+                squareCount >= 13;
+
+            if (hasFiveInARow || has13Squares) {
 
                 broadcast(room, {
                     type: "bingo",
+
                     playerName: player.name,
-                    playerId: player.id
+
+                    playerId: player.id,
+
+                    reason: has13Squares
+                        ? "13 squares"
+                        : "5 in a row"
                 });
             }
 
@@ -323,7 +356,7 @@ wss.on("connection", ws => {
         }
 
         // =========================
-        // PLAYER CLEARS THEIR OWN MARKS
+        // PLAYER CLEARS THEIR OWN SQUARES
         // =========================
 
         if (data.type === "clearMyCard") {
@@ -341,7 +374,6 @@ wss.on("connection", ws => {
                 return;
             }
 
-            // Remove this player's claims
             for (let i = 0; i < 25; i++) {
 
                 if (room.claims[i] === player.id) {
@@ -349,9 +381,9 @@ wss.on("connection", ws => {
                 }
             }
 
-            player.marked = Array(25).fill(false);
+            player.marked =
+                Array(25).fill(false);
 
-            // Update everyone
             broadcast(room, {
                 type: "claimsUpdated",
                 claims: room.claims
@@ -365,6 +397,10 @@ wss.on("connection", ws => {
             return;
         }
     });
+
+    // =========================
+    // PLAYER DISCONNECTS
+    // =========================
 
     ws.on("close", () => {
 
@@ -397,7 +433,7 @@ wss.on("connection", ws => {
 
             room.players.delete(ws.playerId);
 
-            // Free any squares they owned
+            // Free their claimed squares
             for (let i = 0; i < 25; i++) {
 
                 if (room.claims[i] === ws.playerId) {
@@ -411,7 +447,6 @@ wss.on("connection", ws => {
                 claims: room.claims
             });
 
-            // Tell remaining players
             for (const player of room.players.values()) {
 
                 send(player.ws, {
@@ -422,6 +457,11 @@ wss.on("connection", ws => {
         }
     });
 });
+
+
+// =========================
+// CHECK 5 IN A ROW
+// =========================
 
 function checkBingo(marked) {
 
@@ -434,6 +474,7 @@ function checkBingo(marked) {
 
             if (!marked[row * 5 + col]) {
                 complete = false;
+                break;
             }
         }
 
@@ -451,6 +492,7 @@ function checkBingo(marked) {
 
             if (!marked[row * 5 + col]) {
                 complete = false;
+                break;
             }
         }
 
@@ -459,13 +501,14 @@ function checkBingo(marked) {
         }
     }
 
-    // Diagonal
+    // Main diagonal
     let complete = true;
 
     for (let i = 0; i < 5; i++) {
 
         if (!marked[i * 5 + i]) {
             complete = false;
+            break;
         }
     }
 
@@ -480,14 +523,24 @@ function checkBingo(marked) {
 
         if (!marked[i * 5 + (4 - i)]) {
             complete = false;
+            break;
         }
     }
 
     return complete;
 }
 
+
+// =========================
+// START SERVER
+// =========================
+
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
-    console.log(`Bingo running on http://localhost:${PORT}`);
+
+    console.log(
+        `Bingo running on port ${PORT}`
+    );
 });
+```
